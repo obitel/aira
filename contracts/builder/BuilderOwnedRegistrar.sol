@@ -16,7 +16,8 @@ contract BuilderOwnedRegistrar is Builder {
      */
     function create() payable returns (address) {
         var inst = CreatorOwnedRegistrar.create();
-        Owned(inst).delegate(msg.sender);
+        Object(inst).setOwner(msg.sender);
+        Object(inst).setHammer(msg.sender);
         getContractsOf[msg.sender].push(inst);
 
         if (buildingCostWei > 0 && beneficiary != 0) {

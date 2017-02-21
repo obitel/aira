@@ -4,19 +4,16 @@
 //   Gav Wood <g@ethdev.com>
 
 pragma solidity ^0.4.2;
-import "common/Mortal.sol";
+import "common/Object.sol";
 import "./Registrar.sol";
 
-contract AiraRegistrarService is Registrar, Mortal {
+contract AiraRegistrarService is Registrar, Object {
 	struct Record {
 		address addr;
 		address subRegistrar;
 		bytes32 content;
 	}
 	
-    function owner(string _name) constant returns (address o_owner)
-    { return 0; }
-
 	function disown(string _name) onlyOwner {
 		delete m_toRecord[_name];
 		Changed(_name);

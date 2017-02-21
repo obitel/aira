@@ -12,6 +12,7 @@
 --
 module Aira.Bot.Factory (
     createToken
+  , createInvoice
   ) where
 
 import qualified Data.Text                          as T
@@ -124,3 +125,40 @@ createToken (_, px : _) = do
                         <> uri_address inst)
 
         _ -> return (toMessage ("Unknown target! Cancelled." :: Text))
+
+-- | Create Invoice contract by Factory
+createInvoice :: AiraStory a
+createInvoice (_, px : _) = do
+    desc   <- question "Description:"
+    amount <- question "Value in ethers:"
+
+    -- Notification channel
+    notify <- liftIO newChan
+
+    res <- liftIO $ airaWeb3 $ do
+        owner     <- getAddress "AiraEth.bot"
+        builder   <- getAddress "BuilderInvoice.contract"
+        comission <- getAddress "ComissionInvoice.contract"
+        cost      <- fromWei <$> BInvoice.buildingCostWei builder
+
+        tx <- proxy px builder (cost :: Wei) $
+            BInvoice.CreateData comission desc (toWei (amount :: Ether)) px
+
+        event builder $ \(BInvoice.Builded _ inst) -> do
+            res <- airaWeb3 (Invoice.beneficiary inst)
+            case res of
+                Right a ->
+                    if a == px
+                    then writeChan notify inst >> return TerminateEvent
+                    else return ContinueEvent
+                _ -> return ContinueEvent
+
+    case res of
+        Left e -> return (toMessage (T.pack (show e)))
+        Right tx -> do
+            yield (toMessage $ "Success transaction " <> etherscan_tx tx
+                            <> "\nWaiting for confirmation...")
+            inst <- liftIO (readChan notify)
+            return (toMessage $
+                "Invoice contract created:\n"
+                <> etherscan_addr inst)

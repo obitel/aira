@@ -14,8 +14,7 @@ contract BuilderInvoice is Builder {
      * @dev Run script creation contract
      * @return address new contract
      */
-    function create(address _comission, string _description,
-                    bytes32 _beneficiary, uint _value,
+    function create(address _comission, string _description,  uint _value,
                     address _client) payable returns (address) {
         if (buildingCostWei > 0 && beneficiary != 0) {
             // Too low value
@@ -36,8 +35,9 @@ contract BuilderInvoice is Builder {
         if (_client == 0)
             _client = msg.sender;
  
-        var inst = CreatorInvoice.create(_comission, _description, _beneficiary, _value);
-        inst.delegate(_client);
+        var inst = CreatorInvoice.create(_comission, _description, _value);
+        inst.setOwner(_client);
+        inst.setHammer(_client);
         Builded(_client, inst);
         getContractsOf[_client].push(inst);
         return inst;

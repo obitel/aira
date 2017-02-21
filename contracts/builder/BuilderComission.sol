@@ -14,8 +14,7 @@ contract BuilderComission is Builder {
      * @dev Run script creation contract
      * @return address new contract
      */
-    function create(address _ledger, bytes32 _taxman, uint _taxPerc,
-                    address _client) payable returns (address) {
+    function create(address _taxman, uint _taxPerc, address _client) payable returns (address) {
         if (buildingCostWei > 0 && beneficiary != 0) {
             // Too low value
             if (msg.value < buildingCostWei) throw;
@@ -35,8 +34,9 @@ contract BuilderComission is Builder {
         if (_client == 0)
             _client = msg.sender;
  
-        var inst = CreatorComission.create(_ledger, _taxman, _taxPerc);
-        inst.delegate(_client);
+        var inst = CreatorComission.create(_taxman, _taxPerc);
+        inst.setOwner(_client);
+        inst.setHammer(_client);
         Builded(_client, inst);
         getContractsOf[_client].push(inst);
         return inst;
